@@ -9,31 +9,51 @@ import SpriteKit
 import GameplayKit
 
 class GameScene: SKScene {
+    let lowerMargin: CGFloat = 80
+    /*lazy var verticalPosition: CGFloat = {
+        let maxSize = -(self.size.height / 2)
+        
+    }*/
+    
+    let enemySize = CGSize(width: 35, height: 35)
+    let enemySpace = 15.0
+    
+    private var spriteNode: SKSpriteNode!
     
     private var label : SKLabelNode?
     private var spinnyNode : SKShapeNode?
     
     override func didMove(to view: SKView) {
         
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
+        (0...5).forEach { row in
+            (0...9).forEach { col in
+                generateEnemyAt(row: row, col: col)
+            }
         }
         
-        // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
+    }
+    
+    func generateEnemyAt(row: Int, col: Int) {
+        let n = Int(row % 3)
+        let imageName = "enemy_\(n)_"
+        let enemy = SKSpriteNode(imageNamed: imageName + "0")
+        enemy.name = "Enemy_\(row)_\(col)"
+        enemy.size = enemySize
         
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
+        let moveAction = SKAction.sequence([
+            SKAction.run { enemy.texture = SKTexture(imageNamed: imageName + "0") },
+            SKAction.wait(forDuration: 0.5),
+            SKAction.run { enemy.texture = SKTexture(imageNamed: imageName + "1") },
+            SKAction.wait(forDuration: 0.5)
+        ])
+        
+        enemy.run(SKAction.repeatForever(moveAction))
+        
+        enemy.position = CGPoint(x: -(self.size.width / 2.5) + CGFloat(col) * (enemySize.width + enemySpace) + 2 * enemySpace,
+                                 y: (self.size.height / 2.5) - CGFloat(row) * (enemySize.width + enemySpace))
+        
+        self.addChild(enemy)
+        
     }
     
     
@@ -83,6 +103,11 @@ class GameScene: SKScene {
     
     
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
+        let enemyList = self.children.filter { $0.name?.split(separator: "_").first == "enemy" }
+        enemyList.forEach { enemy in
+            
+            enemy.position.x = enemy.position.x + (self.enemySize.width + self.enemySpace) * currentTime
+            
+        }
     }
 }
